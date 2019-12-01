@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+
+  weather-influxdb:
+    container_name: "weather-influxdb"
+    image: influxdb:latest
+    restart: always
+    ports:
+      - 8087:8086
+    volumes:
+      - /data/udp_weatherstation/influxdb:/var/lib/influxdb
+
+  weather-grafana:
+    image: grafana/grafana:latest
+    container_name: weather-grafana
+    ports:
+      - 3001:3000
+    user: "0"
+    links:
+      - weather-influxdb
+    volumes:
+      - /data/udp_weatherstation/grafana:/var/lib/grafana
+
+  weather-receiver:
+    image: udp-weatherstation
+    container-name: weather-receiver
+    ports:
+      - 7654:7654
+    links:
+      - weather-influxdb
+    environment:
+      - INFLUX_HOST=weather-influxdb
+    volumes:
+      - /data/udp_weatherstation/udp-weatherstation/weather.log:/var/log/weather.log
